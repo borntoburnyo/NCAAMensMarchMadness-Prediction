@@ -413,7 +413,7 @@ if __name__ == '__main__':
             ),
         param_grid = param,
         scoring = 'neg_log_loss',
-        n_jobs = 1,
+        n_jobs = 6,
         cv = 5,
         verbose = 1
         )
