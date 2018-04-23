@@ -289,7 +289,7 @@ test_df = x_test.loc[:, ['SeedDiff', 'CoachRegWinRateDiff', 'CoachTourWinRateDif
 
 
 """
-Below is training process, we trained three model as candidates.
+Below is training process, three models were trained as candidates.
 * For logistic regresion:
 	+ Normalize feature 
 	+ Grid search over regularization parameter and type of regularization 
