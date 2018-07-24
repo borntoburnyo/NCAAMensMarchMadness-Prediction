@@ -1,17 +1,9 @@
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-
-
-# Input data files are available in the "../input/" directory.
-# For example, running this (by clicking run or pressing Shift+Enter) 
-# will list the files in the input directory
-
-import os
-print(os.listdir("../input"))
+import numpy as np 
+import pandas as pd 
 
 # load interested dataset 
 # input some data of interest 
-path = '../input'
+path = '~/NCAA'
 
 tour_seed = pd.read_csv(path + "/NCAATourneySeeds.csv") # 1985-2018
 tour_comp_result = pd.read_csv(path + "/NCAATourneyCompactResults.csv") # 1985-2017
@@ -30,7 +22,7 @@ This part build couple of convenient functions to get:
 	+ make train and submission dataset 
 """
 
-# find regular season winning rate
+# calculate coach regular season winning rate
 def coach_reg_win_rate(season):
     """ 
     season: INT
@@ -95,6 +87,20 @@ def coach_tour_win_rate(season):
     tour_coaches_win_rate.fillna(value=0.5, inplace=True) 
     return tour_coaches_win_rate.loc[:, ["Season", "TeamID", "CoachTourWinRate"]]
 
+#select columns (detailed statistics) for each team
+#W and L stand for winning and losing team
+#FGA: field goal attempt 
+#FGM3: 3-points made
+#FGA3: 3-points attempt
+#FTM: free throw made
+#FTA: free throw attempt
+#OR: ofense rebound 
+#DR: defense rebound
+#Ast: assistant 
+#TO: turn over
+#Stl: steal
+#Blk: block
+#PF: personal foul
 
 win_cols = ['WFGM',
 'WFGA',
@@ -124,7 +130,7 @@ lose_cols = ['LFGM',
 'LBlk',
 'LPF']
 
-
+#function collecting regular season statistics 
 def reg_stats(season):
     """
     season: INT 
@@ -160,7 +166,7 @@ def reg_stats(season):
     
     return reg_sum
 
-
+#function concating statistics for all seasons
 def concat_stats(seasons):
     """
     years: List of int
@@ -234,7 +240,7 @@ tour_train_lose["Result"] = 0
 train_df = pd.concat((tour_train_win, tour_train_lose))
 
 
-# extract season, teamid from string 
+# extract season, team id from string 
 def get_season_t1_t2(ID):
     return (int(x) for x in ID.split('_'))
     
@@ -271,7 +277,7 @@ x_test = x_test.merge(test_stats,
                       right_on=["Season","TeamID"],
                       suffixes=("_S","_B"))
 
-# calculate features 
+# calculate difference in each statistics 
 for i in ['CoachRegWinRate_S', 
           'CoachTourWinRate_S',
           'FGR_S', 'FGR3_S', 'FTR_S', 'ORR_S',
@@ -290,21 +296,21 @@ test_df = x_test.loc[:, ['SeedDiff', 'CoachRegWinRateDiff', 'CoachTourWinRateDif
 
 """
 Below is training process, three models were trained as candidates.
-* For logistic regresion:
+* Logistic regresion:
 	+ Normalize feature 
 	+ Grid search over regularization parameter and type of regularization 
 	+ Fine tune after first round of tunning 
-* For random forest classifier: 
+* Random forest classifier: 
 	+ Tuning parameters are: 
 		number of trees, 
 		judging criterion, 
 		number of features, 
 		tree depth, 
 		minimum samples needed for each split 
-	+ number of trees and max tree depth first
+	+ number of trees and max tree depth come first
 	+ Use best parameters above, tune the rest ones 
 	+ Fine tune after first round 
-* For light GBM classifier:
+* Light GBM classifier:
 	+ Tunning parameters are: 
 		number of leaves for each tree,
 		max tree depth,
@@ -314,7 +320,7 @@ Below is training process, three models were trained as candidates.
 		number of samples for each boosting round,
 		number of features for each boosting round,
 		learning rate
-	+ First find best tree, fix number of boosting round 
+	+ First find best number of trees, fix number of boosting round 
 	+ Tune max depth, number of leaves 
 	+ Tune minimum samples needed for each leave, minimum child weight
 	+ Tune row/col samples proportion needed for random sample at each boosting round 
@@ -436,4 +442,3 @@ clipped_pred = np.clip(pred_blend, 0.05, 0.95)
 sub2['Pred'] = clipped_pred 
 
 sub2.to_csv('blend_sub.csv', index = False)
-
